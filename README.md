@@ -3,9 +3,9 @@
 Esta carpeta contiene un conjunto reutilizable de archivos para configurar y ejecutar renders de
 Blender en segundo plano, sin interfaz gráfica. Para cada archivo que quieras procesar, copia la
 carpeta completa `blender_render_kit` junto al `.blend`. El uso recomendado es el
-[flujo guiado desde PowerShell](#flujo-guiado-desde-powershell): detecta el archivo, prepara la
-configuración y ejecuta el dry-run con un solo comando. Antes de renderizar, solicita una
-confirmación explícita.
+[flujo guiado desde PowerShell](#flujo-guiado-desde-powershell): detecta uno o varios archivos,
+prepara sus configuraciones y ejecuta los dry-runs con un solo comando. Antes de renderizar,
+solicita una confirmación explícita.
 
 Para obtener el kit desde GitHub directamente junto a un archivo `.blend`, clónalo desde la
 carpeta del proyecto usando el nombre que espera el script:
@@ -23,8 +23,8 @@ git clone https://github.com/Gotharo/RenderKit.git blender_render_kit
 - `render_batch.py`: valida ambos archivos JSON y renderiza los segmentos configurados.
 - `inspect_blend.py`: genera junto al `.blend` un informe `<blend_name>_inspection.json` y una
   configuración editable `<blend_name>_render_user.json`.
-- `prepare_render.ps1`: detecta el `.blend`, ejecuta la inspección, abre la configuración para
-  editarla, realiza el dry-run y pregunta antes de iniciar un render.
+- `prepare_render.ps1`: detecta uno o varios `.blend`, ejecuta la inspección, abre las
+  configuraciones para editarlas, realiza los dry-runs y pregunta antes de iniciar los renders.
 
 ## Configuración maestra
 
@@ -152,41 +152,45 @@ Este comando solo inspecciona el archivo: no renderiza ni guarda cambios en el `
    Esto ejecuta el script en un proceso de PowerShell temporal; no cambia la politica permanente
    del sistema.
 
-3. El script detecta automáticamente el único `.blend` de la carpeta. Si encuentra varios, muestra
-   una lista numerada para que elijas. Luego ejecuta la inspección y crea el informe
-   `<nombre_del_blend>_inspection.json` y la configuración `<nombre_del_blend>_render_user.json`.
-   Si esta configuración ya existe, la conserva y no la sobrescribe.
+3. El script detecta los archivos `.blend` de la carpeta actual. Si encuentra uno, lo prepara
+   directamente. Si encuentra varios, muestra una lista numerada: escribe un número para preparar
+   solo ese archivo o `A` para encolarlos todos en orden alfabético. Para cada archivo crea el
+   informe `<nombre_del_blend>_inspection.json` y la configuración
+   `<nombre_del_blend>_render_user.json`. Si una configuración ya existe, la conserva y no la
+   sobrescribe.
 
-4. Se abre la configuración en la aplicación asociada a los archivos JSON. Edita los segmentos y
-   rangos, guarda el archivo, cierra el editor y vuelve a PowerShell; presiona Enter para continuar.
+4. Se abre cada configuración seleccionada, una por una, en la aplicación asociada a los archivos
+   JSON. Edita los segmentos y rangos, guarda el archivo, cierra el editor y vuelve a PowerShell;
+   presiona Enter para continuar con la siguiente. Cada `.blend` mantiene su propia configuración.
    Los nombres de las View Layers ya están completados. Si dejas `include_collections` fuera, el
-   render conserva los estados de colección guardados en el `.blend`. Si ya editaste la configuración
-   y no necesitas abrirla otra vez, puedes añadir `-SkipEditor` al final del comando del paso 2.
+   render conserva los estados de colección guardados en ese `.blend`. Si ya editaste todas las
+   configuraciones y no necesitas abrirlas otra vez, añade `-SkipEditor` al comando del paso 2.
 
-5. El script ejecuta el dry-run automáticamente. En la consola muestra solo los nombres de las View
-   Layers, las colecciones incluidas y excluidas, los segmentos, los rangos y las rutas de salida.
-   Termina con `RESULTADO: OK` o `RESULTADO: ERROR`. **El dry-run no renderiza ni crea archivos de
-   imagen.**
+5. El script ejecuta un dry-run para cada archivo seleccionado. En la consola muestra el nombre del
+   `.blend`, las View Layers, las colecciones incluidas y excluidas, los segmentos, los rangos y las
+   rutas de salida. La cola solo puede comenzar si todas las configuraciones pasan la validación;
+   si alguna falla, se muestran los errores y no se inicia ningún render. **El dry-run no renderiza
+   ni crea archivos de imagen.**
 
-6. Si el dry-run termina correctamente, el script pregunta `Ejecutar render ahora? (S/N; Enter = No)`.
-   Responde `S` o `SI` para iniciar el render. Responde `N`, `NO` o presiona Enter para terminar sin
-   renderizar. Si confirmas, PowerShell muestra una sola barra de progreso, en lugar de imprimir el
-   detalle de todos los fotogramas. La barra informa la hora actual, la duración del último
-   fotograma, el promedio por fotograma, el tiempo transcurrido del fotograma actual, el tiempo
-   restante estimado y la hora estimada de término. Se actualiza mientras Blender reporta el
-   progreso y al guardarse cada fotograma. Durante el primero, el promedio y la estimación aparecen
-   como `calculando`. Las estimaciones se basan en los fotogramas completados y pueden variar si
-   cambia la complejidad de los siguientes. Las imágenes se guardan en
-   `renders\<nombre_del_blend>\<view_layer>\<segment>\` dentro de la carpeta del proyecto.
+6. Si todos los dry-runs terminan correctamente, responde `S` o `SI` a la pregunta de confirmación
+   para iniciar. Si seleccionaste varios archivos, se renderizan secuencialmente y la barra indica
+   qué archivo de la cola está activo; si seleccionaste uno, se mantiene la pregunta individual.
+   Responde `N`, `NO` o presiona Enter para terminar sin renderizar. La barra informa la hora actual,
+   la duración del último fotograma, el promedio por fotograma, el tiempo transcurrido del fotograma
+   actual, el tiempo restante estimado y la hora estimada de término. Se actualiza mientras Blender
+   reporta el progreso y al guardarse cada fotograma. Durante el primero, el promedio y la
+   estimación aparecen como `calculando`. Las estimaciones pueden variar si cambia la complejidad
+   de los siguientes fotogramas. Cada archivo se guarda bajo su propia ruta
+   `renders\<nombre_del_blend>\<view_layer>\<segment>\`.
 
-   Para detener un render en curso, presiona **Ctrl+C** en la misma ventana de PowerShell. Es la
-   interrupción estándar para un proceso de consola; `Esc` no está disponible porque Blender se
-   ejecuta en segundo plano, sin interfaz gráfica. Los fotogramas ya guardados permanecen en disco;
-   el fotograma que se estaba procesando podría no completarse.
+   Para detener un render o la cola, presiona **Ctrl+C** en la misma ventana de PowerShell. `Esc` no
+   está disponible porque Blender se ejecuta en segundo plano, sin interfaz gráfica. Los archivos y
+   fotogramas ya completados permanecen en disco; los archivos posteriores de la cola no se inician.
+   Si un render falla, la cola también se detiene para evitar continuar silenciosamente.
 
-   Si luego quieres volver a renderizar esos segmentos, añade `-OverwriteExisting` al comando del
-   paso 2. Esto permite reemplazar las imágenes existentes y vuelve a ejecutar los segmentos
-   completos; no reanuda desde el fotograma donde se interrumpió.
+   Si luego quieres volver a renderizar segmentos con imágenes existentes, añade
+   `-OverwriteExisting` al comando del paso 2. Esto permite reemplazarlas y vuelve a ejecutar los
+   segmentos completos; no reanuda desde el fotograma donde se interrumpió.
 
 El script usa `blender.exe` para poder capturar y filtrar la salida de consola; `blender-launcher.exe`
 no entrega esa salida. Si ya hay imágenes con los mismos nombres, el ejecutor se detendrá para
