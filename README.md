@@ -21,8 +21,9 @@ git clone https://github.com/Gotharo/RenderKit.git blender_render_kit
 - `render_user.json`: configuración manual alternativa, con los nombres de las View Layers, las
   colecciones que se incluirán y los segmentos de fotogramas.
 - `render_batch.py`: valida ambos archivos JSON y renderiza los segmentos configurados.
-- `inspect_blend.py`: genera junto al `.blend` un informe `<blend_name>_inspection.json` y una
-  configuración editable `<blend_name>_render_user.json`.
+- `inspect_blend.py`: genera dentro de `blender_render_kit` un informe
+  `<blend_name>_inspection.json` y junto al `.blend` una configuración editable
+  `<blend_name>_render_user.json`.
 - `prepare_render.ps1`: detecta uno o varios `.blend`, ejecuta la inspección, abre las
   configuraciones para editarlas, realiza los dry-runs y pregunta antes de iniciar los renders.
 
@@ -113,12 +114,13 @@ View Layers y el estado de sus colecciones:
    evita cargar preferencias o configuraciones de inicio del usuario. El inspector verifica que el
    kit usado esté junto al `.blend`.
 
-5. El inspector genera dos archivos junto al `.blend`:
-   - `<nombre_del_archivo>_inspection.json`, con las escenas, colecciones y rangos del timeline.
-   - `<nombre_del_archivo>_render_user.json`, una configuración lista para editar. Incluye los
-     nombres exactos de las View Layers de la escena seleccionada en `render_master.json` (o de la
-     escena activa si `scene` es `null`) y crea un segmento inicial por View Layer que cubre todo el
-     rango de esa escena.
+5. El inspector genera dos archivos:
+   - `blender_render_kit\<nombre_del_archivo>_inspection.json`, con las escenas, colecciones y
+     rangos del timeline.
+   - Junto al `.blend`, `<nombre_del_archivo>_render_user.json`, una configuración lista para
+     editar. Incluye los nombres exactos de las View Layers de la escena seleccionada en
+     `render_master.json` (o de la escena activa si `scene` es `null`) y crea un segmento inicial
+     por View Layer que cubre todo el rango de esa escena.
 
    La configuración generada omite `include_collections`, por lo que se conservan las colecciones
    tal como están configuradas en el `.blend`. El inspector no sobrescribe una configuración
@@ -155,9 +157,9 @@ Este comando solo inspecciona el archivo: no renderiza ni guarda cambios en el `
 3. El script detecta los archivos `.blend` de la carpeta actual. Si encuentra uno, lo prepara
    directamente. Si encuentra varios, muestra una lista numerada: escribe un número para preparar
    solo ese archivo o `A` para encolarlos todos en orden alfabético. Para cada archivo crea el
-   informe `<nombre_del_blend>_inspection.json` y la configuración
-   `<nombre_del_blend>_render_user.json`. Si una configuración ya existe, la conserva y no la
-   sobrescribe.
+   informe `blender_render_kit\<nombre_del_blend>_inspection.json` y la configuración
+   `<nombre_del_blend>_render_user.json` junto al `.blend`. Si una configuración ya existe, la
+   conserva y no la sobrescribe.
 
 4. Se abre cada configuración seleccionada, una por una, en la aplicación asociada a los archivos
    JSON. Edita los segmentos y rangos, guarda el archivo, cierra el editor y vuelve a PowerShell;
