@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "user_config_filename": "render_user.json",
+  "scene": null,
+  "output_root": "//renders",
+  "output_directory_pattern": "{blend_name}/{view_layer}/{segment}",
+  "filename_pattern": "{view_layer}_{segment}_####"
+}

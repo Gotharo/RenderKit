@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "view_layers": [
+    {
+      "name": "collection 1",
+      "include_collections": [
+        "Collection 1"
+      ],
+      "segments": [
+        {
+          "name": "segment_01",
+          "start": 1,
+          "end": 60
+        }
+      ]
+    },
+    {
+      "name": "collection 2",
+      "include_collections": [
+        "Collection 2"
+      ],
+      "segments": [
+        {
+          "name": "segment_01",
+          "start": 60,
+          "end": 120
+        }
+      ]
+    },
+    {
+      "name": "collection 3",
+      "include_collections": [
+        "Collection 3"
+      ],
+      "segments": [
+        {
+          "name": "segment_01",
+          "start": 120,
+          "end": 180
+        }
+      ]
+    }
+  ]
+}
