@@ -44,6 +44,10 @@ La estructura de salida predeterminada es:
 `renders/<blend_name>/<view_layer>/<segment>/<view_layer>_<segment>_####.<format>`
 
 El formato de imagen se toma del archivo `.blend`, no de ninguno de los dos JSON.
+Para cada trabajo, el ejecutor habilita para render únicamente su View Layer y restaura los estados
+originales al terminar. Así, `OPEN_EXR_MULTILAYER` conserva los pases de esa View Layer sin incluir
+las demás en el mismo EXR. No se usa la opción `Render Single Layer` de la interfaz porque Blender
+la ignora al renderizar desde la línea de comandos.
 
 ## Configuración de usuario
 
@@ -168,9 +172,9 @@ Este comando solo inspecciona el archivo: no renderiza ni guarda cambios en el `
    Termina con `RESULTADO: OK` o `RESULTADO: ERROR`. **El dry-run no renderiza ni crea archivos de
    imagen.**
 
-6. Si el dry-run termina correctamente, el script pregunta `Ejecutar render ahora? (S/N; Enter = No)`.
-   Responde `S` o `SI` para iniciar el render. Responde `N`, `NO` o presiona Enter para terminar sin
-   renderizar. Si confirmas, PowerShell muestra una sola barra de progreso, en lugar de imprimir el
+6. Si el dry-run termina correctamente, el script pregunta `Ejecutar render ahora? (S/N; Enter = Si)`.
+   Responde `S`, `SI` o presiona Enter para iniciar el render. Responde `N` o `NO` para cancelar.
+   Si confirmas, PowerShell muestra una sola barra de progreso, en lugar de imprimir el
    detalle de todos los fotogramas. La barra informa la hora actual, la duración del último
    fotograma, el promedio por fotograma, el tiempo transcurrido del fotograma actual, el tiempo
    restante estimado y la hora estimada de término. Se actualiza mientras Blender reporta el
@@ -184,10 +188,11 @@ Este comando solo inspecciona el archivo: no renderiza ni guarda cambios en el `
    ejecuta en segundo plano, sin interfaz gráfica. Los fotogramas ya guardados permanecen en disco;
    el fotograma que se estaba procesando podría no completarse.
 
-   Si luego quieres volver a renderizar esos segmentos, añade `-OverwriteExisting` al comando del
-   paso 2. Esto permite reemplazar las imágenes existentes y vuelve a ejecutar los segmentos
-   completos; no reanuda desde el fotograma donde se interrumpió.
+   Al ejecutar el render, los fotogramas existentes de los segmentos configurados se sobrescriben
+   automáticamente. Solo se reemplazan las salidas correspondientes a este `.blend`; no se borran
+   carpetas ni renders de otros proyectos. Si reduces un rango, los fotogramas anteriores que queden
+   fuera del nuevo rango no se eliminan. La secuencia se vuelve a renderizar completa; no se reanuda
+   desde el fotograma donde se interrumpió.
 
 El script usa `blender.exe` para poder capturar y filtrar la salida de consola; `blender-launcher.exe`
-no entrega esa salida. Si ya hay imágenes con los mismos nombres, el ejecutor se detendrá para
-evitar sobrescribirlas. Los scripts no guardan cambios en el archivo `.blend`.
+no entrega esa salida. Los scripts no guardan cambios en el archivo `.blend`.

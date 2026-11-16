@@ -360,44 +360,58 @@ def render_jobs(jobs):
 
 
 def render_jobs_with_progress(jobs):
-    for index, job in enumerate(jobs, start=1):
-        scene = job["scene"]
-        view_layer = job["view_layer"]
-        output_base = job["output_base"]
-        output_directory = job["output_directory"]
-        file_format = job["file_format"]
+    if not jobs:
+        return
 
-        output_directory.mkdir(parents=True, exist_ok=True)
-        if job["collection_exclusions"] is not None:
-            for path, excluded in job["collection_exclusions"].items():
-                job["layer_collections"][path].exclude = excluded
+    scene = jobs[0]["scene"]
+    original_view_layer_states = [
+        (view_layer, view_layer.use) for view_layer in scene.view_layers
+    ]
+    try:
+        for index, job in enumerate(jobs, start=1):
+            scene = job["scene"]
+            view_layer = job["view_layer"]
+            output_base = job["output_base"]
+            output_directory = job["output_directory"]
+            file_format = job["file_format"]
 
-        scene.frame_start = job["start"]
-        scene.frame_end = job["end"]
-        scene.render.filepath = str(output_base)
-        scene.render.use_file_extension = True
+            for scene_view_layer in scene.view_layers:
+                scene_view_layer.use = scene_view_layer.name == view_layer.name
 
-        print(
-            f"[{index}/{len(jobs)}] Rendering {scene.name} / {view_layer.name} / "
-            f"{job['segment_name']}: "
-            f"frames {job['start']}-{job['end']} to {output_base}",
-            flush=True,
-        )
-        result = bpy.ops.render.render(
-            animation=True,
-            scene=scene.name,
-            layer=view_layer.name,
-        )
-        if "CANCELLED" in result:
-            raise KeyboardInterrupt
-        if "FINISHED" not in result:
-            raise RuntimeError(
-                f"Blender did not finish rendering "
-                f"{view_layer.name!r}/{job['segment_name']!r}: {result}"
+            output_directory.mkdir(parents=True, exist_ok=True)
+            if job["collection_exclusions"] is not None:
+                for path, excluded in job["collection_exclusions"].items():
+                    job["layer_collections"][path].exclude = excluded
+
+            scene.frame_start = job["start"]
+            scene.frame_end = job["end"]
+            scene.render.filepath = str(output_base)
+            scene.render.use_file_extension = True
+
+            print(
+                f"[{index}/{len(jobs)}] Rendering {scene.name} / {view_layer.name} / "
+                f"{job['segment_name']}: "
+                f"frames {job['start']}-{job['end']} to {output_base}",
+                flush=True,
             )
+            result = bpy.ops.render.render(
+                animation=True,
+                scene=scene.name,
+                layer=view_layer.name,
+            )
+            if "CANCELLED" in result:
+                raise KeyboardInterrupt
+            if "FINISHED" not in result:
+                raise RuntimeError(
+                    f"Blender did not finish rendering "
+                    f"{view_layer.name!r}/{job['segment_name']!r}: {result}"
+                )
+    finally:
+        for view_layer, use in original_view_layer_states:
+            view_layer.use = use
 
 
-def validate_output_paths(jobs, overwrite_existing=False):
+def validate_output_paths(jobs, overwrite_existing=True):
     for job in jobs:
         output_directory = job["output_directory"]
         if not output_directory.exists():
@@ -501,8 +515,7 @@ def main():
         raise FileNotFoundError(f"User JSON not found: {config_path}")
     user_config = json.loads(config_path.read_text(encoding="utf-8"))
     jobs = build_jobs(master, user_config)
-    overwrite_existing = "--overwrite-existing" in arguments
-    validate_output_paths(jobs, overwrite_existing=overwrite_existing)
+    validate_output_paths(jobs, overwrite_existing=True)
     segment_count, total_frames = print_plan(jobs)
 
     if "--dry-run" in arguments:

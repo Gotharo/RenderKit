@@ -291,19 +291,16 @@ try {
         $userConfigPath,
         "--dry-run"
     )
-    if ($OverwriteExisting) {
-        $dryRunArguments += "--overwrite-existing"
-    }
     Invoke-Blender -Arguments $dryRunArguments
 
     do {
-        $renderAnswer = (Read-Host "Ejecutar render ahora? (S/N; Enter = No)").Trim().ToUpperInvariant()
+        $renderAnswer = (Read-Host "Ejecutar render ahora? (S/N; Enter = Si)").Trim().ToUpperInvariant()
         if ($renderAnswer -and @("S", "SI", "N", "NO") -notcontains $renderAnswer) {
             Write-Host "Respuesta no valida. Escribe S o N."
         }
     } while ($renderAnswer -and @("S", "SI", "N", "NO") -notcontains $renderAnswer)
 
-    if ($renderAnswer -eq "S" -or $renderAnswer -eq "SI") {
+    if (-not $renderAnswer -or $renderAnswer -eq "S" -or $renderAnswer -eq "SI") {
         Write-Host "Confirmado. Iniciando el render..."
         $renderArguments = @(
             "-b",
@@ -313,9 +310,6 @@ try {
             "--",
             $userConfigPath
         )
-        if ($OverwriteExisting) {
-            $renderArguments += "--overwrite-existing"
-        }
         Invoke-Blender -Arguments $renderArguments
     }
     else {
