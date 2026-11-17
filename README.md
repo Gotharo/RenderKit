@@ -15,10 +15,12 @@
    Los archivos cuyo nombre termina en `_RENDERIZADO` antes de `.blend` se omiten. Por ejemplo,
    `escena_RENDERIZADO.blend` no se prepara ni se renderiza.
 
-   Si todavía no tienes la carpeta del kit, abre PowerShell en `proyecto` y descárgala:
+   Si todavía no tienes la carpeta del kit, clona el repositorio en cualquier ubicación y copia su
+   carpeta `blender_render_kit` dentro de `proyecto`:
 
    ```powershell
-   git clone https://github.com/Gotharo/RenderKit.git blender_render_kit
+   git clone https://github.com/Gotharo/RenderKit.git
+   Copy-Item -Recurse ".\RenderKit\blender_render_kit" "<ruta_de_proyecto>\blender_render_kit"
    ```
 
 2. **Abre PowerShell en `proyecto`.** En el Explorador de archivos, abre esa carpeta y selecciona
