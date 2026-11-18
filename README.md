@@ -166,6 +166,68 @@ Escribe `S` cuando pregunte "¿Ejecutar render ahora?" y el renderizado inicia i
 - El `.blend` cambió (agregaste/eliminaste View Layers)
 - Después de editar `render_user.json` manualmente
 
+---
+
+## Optimización de Renderizado
+
+### Generar inspección una sola vez (caché automático)
+
+La primera ejecución inspecciona el `.blend` y guarda un checksum. Las siguientes veces:
+- Si el `.blend` **no cambió** → inspección automáticamente saltada
+- Si el `.blend` **cambió** → regenera automáticamente
+
+**Primera ejecución (genera inspección):**
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -GenerateConfigsOnly
+```
+
+Esto crea:
+- `<archivo>_render_user.json` (configuración editable)
+- `<archivo>_inspection.json` (caché con metadata del .blend)
+- `..<archivo>_inspection_cache.json` (checksum para validación)
+
+### Saltarse el dry-run (validación)
+
+Si ya sabes que la configuración es correcta, usa `-SkipDryRun`:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor -SkipDryRun
+```
+
+Esto salta la validación de configuración y va directo a la pregunta de render.
+
+### Ir directo al render (sin inspección ni validación)
+
+Después de haber configurado y validado una vez, usa esto para futuras ejecuciones:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor -SkipDryRun
+```
+
+**Esto:**
+- ✅ Lee el `.json` de inspección generado previamente
+- ✅ Saltea la inspección (caché automático si el `.blend` no cambió)
+- ✅ Saltea la validación de dry-run
+- ✅ Va directo al render
+
+**Ahorro de tiempo:** De 5-10 minutos (inspección + validación) a segundos.
+
+#### Resumen de opciones
+
+| Caso | Comando | Tiempo |
+|------|---------|--------|
+| **Config inicial** | `-GenerateConfigsOnly` | 2-3 min |
+| **Con validación** | `-SkipEditor` | 10-15 min |
+| **Sin validación** | `-SkipEditor -SkipDryRun` | 5-10 min |
+| **Renderizaciones posteriores** (mismo `.blend`) | `-SkipEditor -SkipDryRun` | 2-3 min + render |
+
+**⚠️ Notas:**
+- El caché se invalida automáticamente si cambias el `.blend`
+- Si editas `render_user.json`, puedes usar `-SkipDryRun` (el archivo de config se lee de JSON, no de caché)
+- Solo usa `-SkipDryRun` si estás seguro de que tu configuración es válida
+
+
 ### 6. Marca cada archivo como completado
 
 Solo después de que su render termine correctamente, cambia su nombre agregando `_RENDERIZADO` antes de `.blend`:
