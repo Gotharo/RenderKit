@@ -429,6 +429,15 @@ def render_jobs_with_progress(jobs):
                         f"Blender did not finish rendering frame {frame} for "
                         f"{view_layer.name!r}/{job['segment_name']!r}: {result}"
                     )
+
+                # Rename file with frame number
+                rendered_file = output_directory / f"{output_base.stem}.exr"
+                if rendered_file.exists():
+                    frame_padded = str(frame).zfill(4)
+                    new_filename = f"{output_base.stem}_{frame_padded}.exr"
+                    new_path = output_directory / new_filename
+                    rendered_file.rename(new_path)
+
                 frame += frame_step
 
     finally:
