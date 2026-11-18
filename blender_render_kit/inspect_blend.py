@@ -96,7 +96,7 @@ def main():
             "and run the inspector from that copy."
         )
 
-    output_path = kit_directory / f"{blend_path.stem}_inspection.json"
+    output_path = blend_path.parent / f"{blend_path.stem}_inspection.json"
     render_config_path = blend_path.parent / f"{blend_path.stem}_render_user.json"
     render_scene = get_render_scene(kit_directory)
 
