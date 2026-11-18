@@ -2,75 +2,106 @@
 
 ## Paso a paso
 
-1. **Prepara la carpeta del proyecto.** Coloca el archivo o los archivos `.blend` junto a la
-   carpeta completa `blender_render_kit`:
+### 1. Prepara la carpeta del proyecto
 
-   ```text
-   proyecto\
-   ├── escena.blend
-   ├── escena_RENDERIZADO.blend
-   └── blender_render_kit\
-   ```
+Coloca el archivo o los archivos `.blend` junto a la carpeta completa `blender_render_kit`:
 
-   Los archivos cuyo nombre termina en `_RENDERIZADO` antes de `.blend` se omiten. Por ejemplo,
-   `escena_RENDERIZADO.blend` no se prepara ni se renderiza.
+```text
+proyecto\
+├── escena.blend
+├── escena_RENDERIZADO.blend
+└── blender_render_kit\
+```
 
-   Si todavía no tienes la carpeta del kit, clona el repositorio en cualquier ubicación y copia su
-   carpeta `blender_render_kit` dentro de `proyecto`:
+Los archivos cuyo nombre termina en `_RENDERIZADO` antes de `.blend` se omiten. Por ejemplo,
+`escena_RENDERIZADO.blend` no se prepara ni se renderiza.
 
-   ```powershell
-   git clone https://github.com/Gotharo/RenderKit.git
-   Copy-Item -Recurse ".\RenderKit\blender_render_kit" "<ruta_de_proyecto>\blender_render_kit"
-   ```
+Si todavía no tienes la carpeta del kit, clona el repositorio en cualquier ubicación y copia su
+carpeta `blender_render_kit` dentro de `proyecto`:
 
-2. **Abre PowerShell en `proyecto`.** En el Explorador de archivos, abre esa carpeta y selecciona
-   **Abrir en Terminal**. El script espera Blender 5.2 en esta ruta:
+```powershell
+git clone https://github.com/Gotharo/RenderKit.git
+Copy-Item -Recurse ".\RenderKit\blender_render_kit" "<ruta_de_proyecto>\blender_render_kit"
+```
 
-   ```text
-   C:\Program Files\Blender Foundation\Blender 5.2\blender.exe
-   ```
+### 2. Configura Blender
 
-   Si Blender está instalado en otra ubicación, cambia `$blenderExecutable` al inicio de
-   `blender_render_kit\prepare_render.ps1`.
+Abre PowerShell en `proyecto`. El script espera Blender 5.2 en esta ruta:
 
-3. **Genera solo los JSON para editarlos después.** Ejecuta:
+```text
+C:\Program Files\Blender Foundation\Blender 5.2\blender.exe
+```
 
-   ```powershell
-   powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -GenerateConfigsOnly
-   ```
+Si Blender está instalado en otra ubicación, cambia `$blenderExecutable` al inicio de
+`blender_render_kit\prepare_render.ps1`.
 
-   Si hay varios `.blend`, escribe el número del archivo que quieras preparar o `A` para prepararlos
-   todos. Se crea un archivo `<nombre_del_blend>_render_user.json` junto a cada `.blend`, con un
-   segmento inicial por View Layer que cubre el rango actual de la escena. Este modo no genera
-   informes, no abre el editor y no inicia validaciones ni renders. Si el JSON ya existe, no lo
-   sobrescribe.
+### 3. Genera los archivos de configuración
 
-4. **Edita cada JSON.** Ajusta `start` y `end` para definir los fotogramas. Para añadir otro rango,
-   agrega un segmento con un nombre distinto. Por ejemplo:
+Ejecuta (primera vez solamente):
 
-   ```json
-   "segments": [
-     { "name": "segment_01", "start": 1, "end": 120 },
-     { "name": "segment_02", "start": 121, "end": 240 }
-   ]
-   ```
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -GenerateConfigsOnly
+```
 
-   Los fotogramas inicial y final están incluidos. Guarda los cambios.
+Se crea un archivo `<nombre_del_blend>_render_user.json` junto a cada `.blend`.
 
-5. **Ejecuta los renders.** Cuando las configuraciones estén listas, ejecuta:
+### 4. Edita la configuración JSON
 
-   ```powershell
-   powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
-   ```
+Abre `<nombre_del_blend>_render_user.json` y configura los segmentos.
 
-   El script valida todos los JSON con un dry-run antes de iniciar la cola. Si todo está correcto,
-   presiona Enter o escribe `S` para renderizar; escribe `N` para cancelar. Omite `-SkipEditor` si
-   quieres abrir los JSON y revisarlos antes de la validación.
+#### Estructura básica:
 
-   Los renders se guardan bajo `renders\<nombre_del_blend>\<view_layer>\<segment>\`. Para detener
-   el proceso, presiona **Ctrl+C** en la misma ventana de PowerShell.
+```json
+{
+  "schema_version": 1,
+  "view_layers": [
+    {
+      "name": "Master",
+      "segments": [
+        {
+          "name": "segment_01",
+          "start": 1,
+          "end": 120,
+          "renderizar": true
+        }
+      ]
+    }
+  ]
+}
+```
 
-### Workflow rápido (posterior a configuración inicial)
+#### Parámetros:
+
+- **`name`** (ViewLayer): Nombre exacto del View Layer en Blender
+- **`segments`**: Lista de rangos de fotogramas
+  - **`name`**: Nombre único del segmento
+  - **`start`**: Frame inicial (incluido)
+  - **`end`**: Frame final (incluido)
+  - **`renderizar`**: `true` para renderizar, `false` para omitir
+
+#### Ejemplo con múltiples segmentos:
+
+```json
+"segments": [
+  { "name": "intro", "start": 1, "end": 120, "renderizar": true },
+  { "name": "main", "start": 121, "end": 480, "renderizar": true },
+  { "name": "outro", "start": 481, "end": 600, "renderizar": false }
+]
+```
+
+### 5. Ejecuta el renderizado
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
+```
+
+Escribe `S` cuando pregunte "¿Ejecutar render ahora?" y el renderizado inicia.
+
+Los renders se guardan bajo: `renders\<nombre_del_blend>\<view_layer>\<segment>\`
+
+**Para detener:** presiona **Ctrl+C** en PowerShell.
+
+## Workflow rápido (posterior a configuración inicial)
 
 Si ya tienes `render_user.json` editado y no cambió el archivo `.blend`, puedes agilizar:
 
@@ -87,17 +118,61 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\pr
 
 Escribe `S` cuando pregunte "¿Ejecutar render ahora?" y el renderizado inicia inmediatamente.
 
-**Solo necesitas hacer inspección/dry-run si:**
+**Solo necesitas hacer inspección/setup si:**
 - Primera vez configurando un `.blend` nuevo
 - El `.blend` cambió (agregaste/eliminaste View Layers)
 - Después de editar `render_user.json` manualmente
 
-6. **Marca cada archivo completado.** Solo después de que su render termine correctamente, cambia
-   su nombre agregando `_RENDERIZADO` antes de `.blend`. Por ejemplo:
+### 6. Marca cada archivo como completado
 
-   ```text
-   escena.blend -> escena_RENDERIZADO.blend
-   ```
+Solo después de que su render termine correctamente, cambia su nombre agregando `_RENDERIZADO` antes de `.blend`:
 
-   En la siguiente ejecución, el script ignorará ese archivo y procesará los `.blend` nuevos que no
-   tengan el sufijo. No agregues el sufijo si el render se canceló o falló.
+```text
+escena.blend → escena_RENDERIZADO.blend
+```
+
+En la siguiente ejecución, el script ignorará ese archivo y procesará los `.blend` nuevos que no
+tengan el sufijo. No agregues el sufijo si el render se canceló o falló.
+
+---
+
+## Características principales
+
+✅ **Render per-frame garantizado**: Exactamente 1 ViewLayer por frame
+✅ **Pausa/Resume inteligente**: Continúa desde el frame exacto donde pausó
+✅ **Cleanup de frames**: Elimina frames existentes antes de sobrescribir
+✅ **Control granular**: Habilita/deshabilita segments con `"renderizar": true/false`
+✅ **Multi-archivo**: Renderiza múltiples `.blend` en cola
+✅ **Colecciones selectivas**: Renderiza solo colecciones específicas por ViewLayer
+
+---
+
+## Troubleshooting
+
+### "El segment en pausa fue eliminado"
+
+**Causa**: Pausaste un render y después eliminaste ese segment del JSON.
+
+**Solución**: Restaura el segment en el JSON o elimina `render_state.json`.
+
+### After Effects muestra artefactos
+
+**Causa**: Estabas sobrescribiendo frames sobre existentes.
+
+**Solución**: El nuevo sistema limpia automáticamente frames antes de renderizar.
+
+### "No puedo eliminar: archivo locked"
+
+**Causa**: Otro proceso (ej: After Effects) tiene abierto el archivo.
+
+**Solución**: Cierra el archivo en el otro programa y vuelve a intentar.
+
+---
+
+## Notas técnicas
+
+- Cada ViewLayer se renderiza de forma aislada (sin contaminación)
+- El estado de pausa se guarda en `render_state.json`
+- Frame step (saltos de frames) se respeta automáticamente
+- Los archivos se renombran automáticamente con números de frame (0001, 0002, etc.)
+- Formato de salida: Configurable en Blender (EXR, PNG, etc.) - el script se adapta automáticamente
