@@ -536,11 +536,11 @@ try {
                 }
 
                 if (-not $hasMoreSegments) {
-                    Write-Host "  ✓ Todos los segmentos completados para: $($item.BlendFile.Name)" -ForegroundColor Green
+                    Write-Host "  [OK] Todos los segmentos completados para: $($item.BlendFile.Name)" -ForegroundColor Green
                     break  # Exit segment loop, move to next file
                 }
 
-                Write-Host "  → Siguiente segmento en 2 segundos..." -ForegroundColor DarkCyan
+                Write-Host "  [+] Siguiente segmento en 2 segundos..." -ForegroundColor DarkCyan
                 Start-Sleep -Seconds 2
             }
 
