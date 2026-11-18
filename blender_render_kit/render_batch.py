@@ -441,7 +441,7 @@ def render_jobs_with_progress(jobs):
                     frame_padded = str(frame).zfill(4)
                     new_filename = f"{output_base.stem}_{frame_padded}.exr"
                     new_path = output_directory / new_filename
-                    rendered_file.rename(new_path)
+                    rendered_file.replace(new_path)
 
                 frame += frame_step
 
