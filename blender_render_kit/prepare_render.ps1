@@ -1,7 +1,8 @@
 param(
     [switch]$SkipEditor,
     [switch]$OverwriteExisting,
-    [switch]$GenerateConfigsOnly
+    [switch]$GenerateConfigsOnly,
+    [switch]$SkipDryRun
 )
 
 $script:ResultReported = $false
@@ -361,62 +362,74 @@ try {
         }
     }
 
-    $dryRunErrors = @()
-    for ($index = 0; $index -lt $renderItems.Count; $index++) {
-        $item = $renderItems[$index]
-        $script:CurrentQueueIndex = $index + 1
-        $script:CurrentQueueLabel = "Archivo $($index + 1)/$($renderItems.Count): $($item.BlendFile.Name)"
-        Write-Host (
-            "Validando archivo {0}/{1} con dry-run: {2}" -f
-            ($index + 1), $renderItems.Count, $item.BlendFile.Name
-        )
-
-        try {
-            Get-Content -LiteralPath $item.ConfigPath -Raw |
-                ConvertFrom-Json -ErrorAction Stop |
-                Out-Null
-
-            $dryRunArguments = @(
-                "-b",
-                $item.BlendFile.FullName,
-                "--python",
-                $renderBatchPath,
-                "--",
-                $item.ConfigPath,
-                "--dry-run"
+    if (-not $SkipDryRun) {
+        $dryRunErrors = @()
+        for ($index = 0; $index -lt $renderItems.Count; $index++) {
+            $item = $renderItems[$index]
+            $script:CurrentQueueIndex = $index + 1
+            $script:CurrentQueueLabel = "Archivo $($index + 1)/$($renderItems.Count): $($item.BlendFile.Name)"
+            Write-Host (
+                "Validando archivo {0}/{1} con dry-run: {2}" -f
+                ($index + 1), $renderItems.Count, $item.BlendFile.Name
             )
-            Invoke-Blender -Arguments $dryRunArguments
+
+            try {
+                Get-Content -LiteralPath $item.ConfigPath -Raw |
+                    ConvertFrom-Json -ErrorAction Stop |
+                    Out-Null
+
+                $dryRunArguments = @(
+                    "-b",
+                    $item.BlendFile.FullName,
+                    "--python",
+                    $renderBatchPath,
+                    "--",
+                    $item.ConfigPath,
+                    "--dry-run"
+                )
+                Invoke-Blender -Arguments $dryRunArguments
+            }
+            catch {
+                $dryRunErrors += "{0}: {1}" -f (
+                    $item.BlendFile.Name,
+                    $_.Exception.Message
+                )
+            }
         }
-        catch {
-            $dryRunErrors += "{0}: {1}" -f (
-                $item.BlendFile.Name,
-                $_.Exception.Message
+
+        if ($dryRunErrors.Count -gt 0) {
+            Write-Host (
+                "RESULTADO: ERROR - Fallo la validacion de {0} archivo(s); no se iniciara la cola." -f
+                $dryRunErrors.Count
             )
+            foreach ($dryRunError in $dryRunErrors) {
+                Write-Host "  - $dryRunError"
+            }
+            $script:ResultReported = $true
+            throw "Corrige las configuraciones indicadas y vuelve a ejecutar el flujo."
         }
-    }
 
-    if ($dryRunErrors.Count -gt 0) {
-        Write-Host (
-            "RESULTADO: ERROR - Fallo la validacion de {0} archivo(s); no se iniciara la cola." -f
-            $dryRunErrors.Count
-        )
-        foreach ($dryRunError in $dryRunErrors) {
-            Write-Host "  - $dryRunError"
+        if ($renderItems.Count -gt 1) {
+            Write-Host (
+                "RESULTADO: OK - dry-run correcto para los {0} archivos de la cola." -f
+                $renderItems.Count
+            )
+            $renderPrompt = "Ejecutar la cola de $($renderItems.Count) renders ahora? (S/N; Enter = Si)"
         }
-        $script:ResultReported = $true
-        throw "Corrige las configuraciones indicadas y vuelve a ejecutar el flujo."
-    }
-
-    if ($renderItems.Count -gt 1) {
-        Write-Host (
-            "RESULTADO: OK - dry-run correcto para los {0} archivos de la cola." -f
-            $renderItems.Count
-        )
-        $renderPrompt = "Ejecutar la cola de $($renderItems.Count) renders ahora? (S/N; Enter = Si)"
+        else {
+            $renderPrompt = "Ejecutar render ahora? (S/N; Enter = Si)"
+        }
     }
     else {
-        $renderPrompt = "Ejecutar render ahora? (S/N; Enter = Si)"
+        Write-Host "Saltando dry-run (--SkipDryRun activado)"
+        if ($renderItems.Count -gt 1) {
+            $renderPrompt = "Ejecutar la cola de $($renderItems.Count) renders ahora? (S/N; Enter = Si)"
+        }
+        else {
+            $renderPrompt = "Ejecutar render ahora? (S/N; Enter = Si)"
+        }
     }
+
 
     do {
         $renderAnswer = (Read-Host $renderPrompt).Trim().ToUpperInvariant()
