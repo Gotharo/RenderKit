@@ -314,21 +314,33 @@ try {
         $script:CurrentQueueIndex = $index + 1
         $script:CurrentQueueLabel = "Archivo $($index + 1)/$($selectedBlendFiles.Count): $($blendFile.Name)"
 
-        Write-Host (
-            "Inspeccionando archivo {0}/{1}: {2}" -f
-            ($index + 1), $selectedBlendFiles.Count, $blendFile.Name
-        )
-        $inspectorArguments = @(
-            "-b",
-            "--factory-startup",
-            $blendPath,
-            "--python",
-            $inspectorPath
-        )
-        if ($GenerateConfigsOnly) {
-            $inspectorArguments += @("--", "--config-only")
+        # Check if inspection cache is valid
+        $checkCacheScript = Join-Path $kitDirectory "check_inspection_cache.py"
+        $cacheStatus = & python $checkCacheScript $blendPath 2>$null
+
+        if ($cacheStatus -eq "CACHE_VALID") {
+            Write-Host (
+                "Cache valido para archivo {0}/{1}: {2} (inspeccion saltada)" -f
+                ($index + 1), $selectedBlendFiles.Count, $blendFile.Name
+            )
         }
-        Invoke-Blender -Arguments $inspectorArguments
+        else {
+            Write-Host (
+                "Inspeccionando archivo {0}/{1}: {2}" -f
+                ($index + 1), $selectedBlendFiles.Count, $blendFile.Name
+            )
+            $inspectorArguments = @(
+                "-b",
+                "--factory-startup",
+                $blendPath,
+                "--python",
+                $inspectorPath
+            )
+            if ($GenerateConfigsOnly) {
+                $inspectorArguments += @("--", "--config-only")
+            }
+            Invoke-Blender -Arguments $inspectorArguments
+        }
 
         if (-not (Test-Path -LiteralPath $userConfigPath -PathType Leaf)) {
             throw "El inspector no genero la configuracion esperada: $userConfigPath"

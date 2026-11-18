@@ -7,6 +7,8 @@ from pathlib import Path
 
 import bpy
 
+from inspection_cache import save_cache_metadata
+
 
 def get_script_arguments():
     if "--" not in sys.argv:
@@ -107,6 +109,7 @@ def main():
                 encoding="utf-8",
             )
             print(f"CONFIGURACION: plantilla creada: {render_config_path}")
+        save_cache_metadata(blend_path, output_path)
         print("RESULTADO: OK - configuracion preparada; no se genero informe ni render.")
         return
 
@@ -156,6 +159,7 @@ def main():
             encoding="utf-8",
         )
         print(f"CONFIGURACION: plantilla creada: {render_config_path}")
+    save_cache_metadata(blend_path, output_path)
     print("RESULTADO: OK - inspeccion completada.")
 
 
