@@ -131,7 +131,26 @@ function Update-RenderProgress {
         -PercentComplete ([int][math]::Min(100, $percentComplete))
 }
 
-function Invoke-Blender {
+function Invoke-BlenderInspector {
+    param([string[]]$Arguments)
+
+    $logFile = Join-Path $env:TEMP "blender_inspector_$([guid]::NewGuid()).log"
+
+    try {
+        $Arguments += @("--log-file", $logFile)
+        & $script:BlenderExecutable @Arguments
+
+        # Read and display log
+        if (Test-Path $logFile) {
+            Get-Content $logFile
+        }
+    }
+    finally {
+        Remove-Item $logFile -ErrorAction SilentlyContinue
+    }
+}
+
+
     param([string[]]$Arguments)
 
     $script:ResultReported = $false
@@ -338,9 +357,11 @@ try {
             )
             if ($GenerateConfigsOnly) {
                 $inspectorArguments += @("--", "--config-only")
+                Invoke-BlenderInspector -Arguments $inspectorArguments
             }
-            $blenderOutput = Invoke-Blender -Arguments $inspectorArguments 2>&1
-            Write-Host $blenderOutput
+            else {
+                Invoke-Blender -Arguments $inspectorArguments
+            }
         }
 
         if (-not (Test-Path -LiteralPath $userConfigPath -PathType Leaf)) {
