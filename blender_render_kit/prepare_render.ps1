@@ -316,7 +316,7 @@ try {
 
         # Check if inspection cache is valid
         $checkCacheScript = Join-Path $kitDirectory "check_inspection_cache.py"
-        $cacheStatus = & python $checkCacheScript $blendPath 2>$null
+        $cacheStatus = & python $checkCacheScript $blendPath 2>&1
 
         if ($cacheStatus -eq "CACHE_VALID") {
             Write-Host (
