@@ -256,6 +256,7 @@ def build_jobs(master, user_config):
                 )
 
             if not should_render:
+                print(f"  ⏭️  Saltando: {layer_name}/{segment_name} (renderizar: false)", flush=True)
                 continue
 
             for previous_name, previous_start, previous_end in segment_ranges:
