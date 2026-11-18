@@ -9,6 +9,10 @@ from pathlib import Path
 
 import bpy
 
+# Add kit directory to Python path for local imports
+sys.path.insert(0, str(Path(__file__).parent))
+from segment_state import get_jobs_to_render, has_more_segments
+
 
 OPTIONS = {"--dry-run", "--overwrite-existing"}
 
@@ -553,7 +557,19 @@ def main():
     if not config_path.is_file():
         raise FileNotFoundError(f"User JSON not found: {config_path}")
     user_config = json.loads(config_path.read_text(encoding="utf-8"))
-    jobs = build_jobs(master, user_config)
+    all_jobs = build_jobs(master, user_config)
+
+    # Filter to render only the next segment (per-segment execution)
+    working_dir = config_path.parent
+    jobs = get_jobs_to_render(all_jobs, working_dir)
+
+    if not jobs:
+        print(
+            "RESULTADO: OK - todos los segmentos ya fueron renderizados.",
+            flush=True,
+        )
+        return
+
     validate_output_paths(jobs, overwrite_existing=True)
     segment_count, total_frames = print_plan(jobs)
 

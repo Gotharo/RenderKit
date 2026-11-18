@@ -500,16 +500,48 @@ try {
                 "--",
                 $item.ConfigPath
             )
-            try {
-                Invoke-Blender -Arguments $renderArguments
-            }
-            catch {
-                if ($renderItems.Count -gt 1) {
-                    Write-Host (
-                        "COLA DETENIDA en $($script:CurrentQueueLabel); los siguientes archivos no se iniciaron."
-                    )
+
+            # Loop for per-segment execution: each segment renders with fresh Blender instance
+            $segmentCount = 0
+            while ($true) {
+                $segmentCount++
+                Write-Host "  [Segmento $segmentCount] Iniciando Blender..." -ForegroundColor DarkCyan
+
+                try {
+                    Invoke-Blender -Arguments $renderArguments
                 }
-                throw
+                catch {
+                    if ($renderItems.Count -gt 1) {
+                        Write-Host (
+                            "COLA DETENIDA en $($script:CurrentQueueLabel); los siguientes archivos no se iniciaron."
+                        )
+                    }
+                    throw
+                }
+
+                # Check if there are more segments to render
+                $renderStatePath = Join-Path $item.BlendFile.Directory "render_state.json"
+                $hasMoreSegments = $false
+
+                if (Test-Path $renderStatePath) {
+                    try {
+                        $renderState = Get-Content $renderStatePath -Raw | ConvertFrom-Json
+                        # If render_state.json exists, check if there's indication of more work
+                        # For now, we assume if file exists and render completed, there might be more
+                        $hasMoreSegments = $true
+                    }
+                    catch {
+                        $hasMoreSegments = $false
+                    }
+                }
+
+                if (-not $hasMoreSegments) {
+                    Write-Host "  ✓ Todos los segmentos completados para: $($item.BlendFile.Name)" -ForegroundColor Green
+                    break  # Exit segment loop, move to next file
+                }
+
+                Write-Host "  → Siguiente segmento en 2 segundos..." -ForegroundColor DarkCyan
+                Start-Sleep -Seconds 2
             }
 
             Write-Host "Archivo completado: $($item.BlendFile.Name)"
