@@ -1,0 +1,3 @@
+- [Double ViewLayer Fix](achievement_double_viewlayer_fix.md) — Solved critical multi-layer EXR accumulation issue through per-segment Blender resets
+- [Branch Management](feedback_branch_management.md) — Never auto-switch branches; user manages workflow
+- [Inspection Caching](implementation_inspection_cache.md) — SHA256-based cache system for .blend inspection
