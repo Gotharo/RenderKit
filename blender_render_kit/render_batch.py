@@ -11,7 +11,7 @@ import bpy
 
 # Add kit directory to Python path for local imports
 sys.path.insert(0, str(Path(__file__).parent))
-from segment_state import get_jobs_to_render, has_more_segments
+from segment_state import get_jobs_to_render, has_more_segments_after
 
 
 OPTIONS = {"--dry-run", "--overwrite-existing"}
@@ -584,7 +584,6 @@ def main():
     render_jobs(jobs)
 
     # Check if there are more segments to render after this one
-    from segment_state import has_more_segments_after
     more_segments = has_more_segments_after(all_jobs, working_dir)
 
     print(
