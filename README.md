@@ -83,15 +83,24 @@ Abre `<nombre_del_blend>_render_user.json` y configura los segmentos.
   - **`end`**: Frame final (incluido)
   - **`renderizar`**: `true` para renderizar, `false` para omitir
 
-#### Ejemplo con múltiples segmentos:
+#### Comportamiento de exclusión automática:
+
+- Si un **segmento** tiene `"renderizar": false` → se salta ese segmento
+- Si un **view layer** tiene TODOS los segmentos con `"renderizar": false` → se salta el entire view layer
+- Si un **view layer** tiene ALGUNOS segmentos en true y otros en false → renderiza SOLO los que tienen true
+
+Ejemplo: View Layer con mezcla de segmentos activos/inactivos:
 
 ```json
 "segments": [
   { "name": "intro", "start": 1, "end": 120, "renderizar": true },
-  { "name": "main", "start": 121, "end": 480, "renderizar": true },
-  { "name": "outro", "start": 481, "end": 600, "renderizar": false }
+  { "name": "main", "start": 121, "end": 480, "renderizar": false },
+  { "name": "outro", "start": 481, "end": 600, "renderizar": true }
 ]
 ```
+Resultado: Se renderiza **intro** y **outro**, se salta **main**.
+
+Si TODOS los segmentos están en false, el view layer completo se excluye de la cola.
 
 ### 5. Ejecuta el renderizado
 
