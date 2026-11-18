@@ -70,6 +70,28 @@
    Los renders se guardan bajo `renders\<nombre_del_blend>\<view_layer>\<segment>\`. Para detener
    el proceso, presiona **Ctrl+C** en la misma ventana de PowerShell.
 
+### Workflow rápido (posterior a configuración inicial)
+
+Si ya tienes `render_user.json` editado y no cambió el archivo `.blend`, puedes agilizar:
+
+```powershell
+# 1. Ir a la carpeta del proyecto
+cd "<ruta_de_proyecto>"
+
+# 2. Copiar kit actualizado (si actualizaste el código)
+Copy-Item -Recurse "..\Coding\blender_render_kit" "." -Force
+
+# 3. Ejecutar directamente sin editor ni dry-run
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
+```
+
+Escribe `S` cuando pregunte "¿Ejecutar render ahora?" y el renderizado inicia inmediatamente.
+
+**Solo necesitas hacer inspección/dry-run si:**
+- Primera vez configurando un `.blend` nuevo
+- El `.blend` cambió (agregaste/eliminaste View Layers)
+- Después de editar `render_user.json` manualmente
+
 6. **Marca cada archivo completado.** Solo después de que su render termine correctamente, cambia
    su nombre agregando `_RENDERIZADO` antes de `.blend`. Por ejemplo:
 
