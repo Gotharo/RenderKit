@@ -378,13 +378,19 @@ def render_jobs_with_progress(jobs):
             for scene_view_layer in scene.view_layers:
                 scene_view_layer.use = scene_view_layer.name == view_layer.name
 
+            # Force only one active view layer: disable all others explicitly
+            active_count = sum(1 for vl in scene.view_layers if vl.use)
+            if active_count != 1 or not view_layer.use:
+                raise RuntimeError(
+                    f"Failed to isolate View Layer {view_layer.name!r}: "
+                    f"{active_count} view layers are active (expected 1)"
+                )
+
             output_directory.mkdir(parents=True, exist_ok=True)
             if job["collection_exclusions"] is not None:
                 for path, excluded in job["collection_exclusions"].items():
                     job["layer_collections"][path].exclude = excluded
 
-            scene.frame_start = job["start"]
-            scene.frame_end = job["end"]
             scene.render.filepath = str(output_base)
             scene.render.use_file_extension = True
 
@@ -394,18 +400,25 @@ def render_jobs_with_progress(jobs):
                 f"frames {job['start']}-{job['end']} to {output_base}",
                 flush=True,
             )
-            result = bpy.ops.render.render(
-                animation=True,
-                scene=scene.name,
-                layer=view_layer.name,
-            )
-            if "CANCELLED" in result:
-                raise KeyboardInterrupt
-            if "FINISHED" not in result:
-                raise RuntimeError(
-                    f"Blender did not finish rendering "
-                    f"{view_layer.name!r}/{job['segment_name']!r}: {result}"
+
+            frame_step = max(1, int(scene.frame_step))
+            frame = job["start"]
+            while frame <= job["end"]:
+                scene.frame_set(frame)
+                result = bpy.ops.render.render(
+                    write_still=True,
+                    scene=scene.name,
+                    layer=view_layer.name,
                 )
+                if "CANCELLED" in result:
+                    raise KeyboardInterrupt
+                if "FINISHED" not in result:
+                    raise RuntimeError(
+                        f"Blender did not finish rendering frame {frame} for "
+                        f"{view_layer.name!r}/{job['segment_name']!r}: {result}"
+                    )
+                frame += frame_step
+
     finally:
         for view_layer, use in original_view_layer_states:
             view_layer.use = use
