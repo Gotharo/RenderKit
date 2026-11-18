@@ -9,8 +9,6 @@ from pathlib import Path
 
 import bpy
 
-from render_layer_isolation import isolate_render_layer, reset_render_layer_isolation
-
 
 OPTIONS = {"--dry-run", "--overwrite-existing"}
 
@@ -405,9 +403,6 @@ def render_jobs_with_progress(jobs):
                     f"{active_count} view layers are active (expected 1)"
                 )
 
-            # Isolate render_single_layer: only target layer renders in the EXR
-            isolate_render_layer(scene, view_layer)
-
             output_directory.mkdir(parents=True, exist_ok=True)
             if job["collection_exclusions"] is not None:
                 for path, excluded in job["collection_exclusions"].items():
@@ -451,7 +446,6 @@ def render_jobs_with_progress(jobs):
                 frame += frame_step
 
     finally:
-        reset_render_layer_isolation(jobs[0]["scene"])
         for view_layer, use in original_view_layer_states:
             view_layer.use = use
 
