@@ -7,6 +7,9 @@ from pathlib import Path
 
 import bpy
 
+# Add kit directory to Python path so we can import local modules
+sys.path.insert(0, str(Path(__file__).parent))
+
 from inspection_cache import save_cache_metadata
 
 
