@@ -1,5 +1,9 @@
 # Render de Blender
 
+**Kit flexible para renderizar múltiples archivos `.blend` en la misma carpeta con configuración independiente por archivo.**
+
+---
+
 ## Paso a paso
 
 ### 1. Prepara la carpeta del proyecto
@@ -99,7 +103,37 @@ Escribe `S` cuando pregunte "¿Ejecutar render ahora?" y el renderizado inicia.
 
 Los renders se guardan bajo: `renders\<nombre_del_blend>\<view_layer>\<segment>\`
 
-**Para detener:** presiona **Ctrl+C** en PowerShell.
+**Para detener:** presiona **Ctrl+C** en PowerShell. El estado se guarda automáticamente.
+
+---
+
+## Pausa y Reanudación de Renders
+
+Cuando presionas **Ctrl+C**, el script guarda el estado exacto (ViewLayer, Segment, Frame) en `render_state.json`.
+
+En la siguiente ejecución:
+1. El script detecta automáticamente `render_state.json`
+2. Muestra: ViewLayer, Segment, y frame pausado
+3. Si cambiaste rangos/segmentos en el JSON, te pide confirmación
+4. Continúa desde el frame exacto donde pausaste
+
+**Workflow típico:**
+```powershell
+# Iniciar render
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
+# ... renders unos frames ...
+# Presionar Ctrl+C → se pausa automáticamente
+
+# Editar JSON si necesitas cambios
+# Reanimar:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
+# Script resume desde donde pausó
+```
+
+**Si cambias JSON entre pausa y resume:**
+- El script detecta rangos modificados
+- Te pregunta si continuar o cancelar
+- Puedes abortar, ajustar JSON nuevamente, y reintentar
 
 ## Workflow rápido (posterior a configuración inicial)
 
@@ -153,7 +187,31 @@ tengan el sufijo. No agregues el sufijo si el render se canceló o falló.
 
 **Causa**: Pausaste un render y después eliminaste ese segment del JSON.
 
-**Solución**: Restaura el segment en el JSON o elimina `render_state.json`.
+**Solución**: 
+- Opción A: Restaura el segment en el JSON
+- Opción B: Elimina `render_state.json` para descartar la pausa
+  ```powershell
+  Remove-Item "render_state.json"
+  ```
+
+### "Frame pausado está fuera del rango"
+
+**Causa**: Pausaste en frame 50, pero ahora el segment cubre frames 60-120.
+
+**Solución**: 
+- Verifica que el rango en JSON sea correcto
+- Elimina `render_state.json` y comienza de nuevo si necesitas cambios drásticos
+
+### Limpiar estado de pausa manual
+
+Si necesitas descartar una pausa guardada:
+
+```powershell
+Remove-Item "render_state.json"
+Remove-Item "render_jobs_backup.json"
+```
+
+Luego ejecuta el render normalmente — comenzará desde el inicio.
 
 ### After Effects muestra artefactos
 
