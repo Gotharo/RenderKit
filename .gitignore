@@ -1,0 +1,21 @@
+# Blender files
+*.blend
+*.blend1
+
+# Render outputs
+renders/
+*.exr
+*.png
+*.jpg
+*.tiff
+
+# Render state files
+render_state.json
+render_jobs_backup.json
+
+# Inspection reports (optional - keep if you want to track changes)
+*_inspection.json
+
+# System files
+.DS_Store
+Thumbs.db
