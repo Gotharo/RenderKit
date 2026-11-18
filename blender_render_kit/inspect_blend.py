@@ -96,23 +96,8 @@ def main():
     output_path = kit_directory / f"{blend_path.stem}_inspection.json"
     render_config_path = blend_path.parent / f"{blend_path.stem}_render_user.json"
     render_scene = get_render_scene(kit_directory)
-    if "--config-only" in arguments:
-        if render_config_path.exists():
-            print(
-                "CONFIGURACION: existente; no se sobrescribio: "
-                f"{render_config_path}"
-            )
-        else:
-            render_config_path.write_text(
-                json.dumps(build_render_config(render_scene), indent=2, ensure_ascii=False)
-                + "\n",
-                encoding="utf-8",
-            )
-            print(f"CONFIGURACION: plantilla creada: {render_config_path}")
-        save_cache_metadata(blend_path, output_path)
-        print("RESULTADO: OK - configuracion preparada; no se genero informe ni render.")
-        return
 
+    # Always generate inspection report (needed for caching and rendering)
     report = {
         "schema_version": 1,
         "blend_file": str(blend_path),
@@ -147,6 +132,7 @@ def main():
     )
     print(f"INFORME: {output_path}")
 
+    # Generate or preserve config
     if render_config_path.exists():
         print(
             "CONFIGURACION: existente; no se sobrescribio: "
@@ -159,8 +145,14 @@ def main():
             encoding="utf-8",
         )
         print(f"CONFIGURACION: plantilla creada: {render_config_path}")
+
+    # Save cache after inspection completes
     save_cache_metadata(blend_path, output_path)
-    print("RESULTADO: OK - inspeccion completada.")
+
+    if "--config-only" in arguments:
+        print("RESULTADO: OK - configuracion preparada; inspeccion guardada en cache.")
+    else:
+        print("RESULTADO: OK - inspeccion completada.")
 
 
 if __name__ == "__main__":
