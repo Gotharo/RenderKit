@@ -72,17 +72,21 @@ Abre `<archivo>_render_user.json`:
 
 ### 5. Ejecuta el render
 
-**Primera vez (con validación):**
+**Primera ejecución (genera inspección + caché):**
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
 ```
 
-**Siguientes veces (caché automático, sin validación):**
+**Siguientes ejecuciones (caché automático, sin inspección):**
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor -SkipDryRun
 ```
 
 Escribe `S` cuando pregunte "¿Ejecutar render ahora?"
+
+Verás:
+- Primera vez: `Inspeccionando archivo...` (3-5 min)
+- Siguientes veces: `Cache valido... (inspeccion saltada)` ⚡
 
 Renders se guardan en: `renders\<archivo>\<view_layer>\<segment>\`
 
@@ -112,13 +116,17 @@ Remove-Item "render_state.json", "render_jobs_backup.json"
 
 ## Opciones de ejecución
 
-| Caso | Comando |
-|------|---------|
-| Config inicial | `-GenerateConfigsOnly` |
-| Con validación | `-SkipEditor` |
-| Sin validación (después de validar una vez) | `-SkipEditor -SkipDryRun` |
+| Caso | Comando | Tiempo |
+|------|---------|--------|
+| Config inicial | `-GenerateConfigsOnly` | 3-5 min |
+| Render (primera vez) | `-SkipEditor` | 10-15 min |
+| Render (siguientes: caché) | `-SkipEditor -SkipDryRun` | ⚡ Segundos |
 
-**Caché automático:** Si el `.blend` no cambió, la inspección se salta. Regenera automáticamente si cambias el `.blend`.
+**Caché automático:**
+- Primera vez: Genera `_inspection.json` + checksum SHA256
+- Siguientes veces: Compara checksum
+- Si `.blend` no cambió → inspección saltada
+- Si `.blend` cambió → regenera automáticamente
 
 ---
 
