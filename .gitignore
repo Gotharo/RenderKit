@@ -16,6 +16,13 @@ render_jobs_backup.json
 # Inspection reports (optional - keep if you want to track changes)
 *_inspection.json
 
+# Python installations and cache
+blender_render_kit/Python/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
 # System files
 .DS_Store
 Thumbs.db
