@@ -339,7 +339,8 @@ try {
             if ($GenerateConfigsOnly) {
                 $inspectorArguments += @("--", "--config-only")
             }
-            Invoke-Blender -Arguments $inspectorArguments
+            $blenderOutput = Invoke-Blender -Arguments $inspectorArguments 2>&1
+            Write-Host $blenderOutput
         }
 
         if (-not (Test-Path -LiteralPath $userConfigPath -PathType Leaf)) {
