@@ -582,11 +582,22 @@ def main():
         return
 
     render_jobs(jobs)
+
+    # Check if there are more segments to render after this one
+    from segment_state import has_more_segments_after
+    more_segments = has_more_segments_after(all_jobs, working_dir)
+
     print(
         f"RESULTADO: OK - render completado: {segment_count} segmentos, "
         f"{total_frames} fotogramas. Configuracion: {config_path}",
         flush=True,
     )
+
+    # Signal to PowerShell if there are more segments
+    if more_segments:
+        print("RENDER_STATUS: MAS_SEGMENTOS", flush=True)
+    else:
+        print("RENDER_STATUS: TODO_COMPLETO", flush=True)
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ $script:LastFrameSeconds = $null
 $script:CurrentQueueIndex = 0
 $script:QueueCount = 0
 $script:CurrentQueueLabel = $null
+$script:RenderStatus = $null
 $completedBlendSuffix = "_RENDERIZADO"
 $blenderExecutable = "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"
 $workingDirectory = (Get-Location).Path
@@ -207,9 +208,13 @@ function Invoke-Blender {
                     Update-RenderProgress
                 }
                 elseif (
-                    $line -match "RESULTADO:|INFORME:|CONFIGURACION:|^View Layer:|Colecciones incluidas:|Colecciones excluidas:|Segmento:|^Plan:|^Warning:|^Will overwrite|^\[[0-9]+/[0-9]+\] Rendering"
+                    $line -match "RESULTADO:|INFORME:|CONFIGURACION:|^View Layer:|Colecciones incluidas:|Colecciones excluidas:|Segmento:|^Plan:|^Warning:|^Will overwrite|^\[[0-9]+/[0-9]+\] Rendering|RENDER_STATUS:"
                 ) {
                     Write-Host $line
+                    # Capture render status (MAS_SEGMENTOS or TODO_COMPLETO)
+                    if ($line -match "RENDER_STATUS: (.+)$") {
+                        $script:RenderStatus = $Matches[1]
+                    }
                     if ($line -match "RESULTADO: ERROR") {
                         $script:ResultReported = $true
                     }
@@ -507,6 +512,9 @@ try {
                 $segmentCount++
                 Write-Host "  [Segmento $segmentCount] Iniciando Blender..." -ForegroundColor DarkCyan
 
+                # Reset status before render
+                $script:RenderStatus = $null
+
                 try {
                     Invoke-Blender -Arguments $renderArguments
                 }
@@ -519,29 +527,21 @@ try {
                     throw
                 }
 
-                # Check if there are more segments to render
-                $renderStatePath = Join-Path $item.BlendFile.Directory "render_state.json"
-                $hasMoreSegments = $false
-
-                if (Test-Path $renderStatePath) {
-                    try {
-                        $renderState = Get-Content $renderStatePath -Raw | ConvertFrom-Json
-                        # If render_state.json exists, check if there's indication of more work
-                        # For now, we assume if file exists and render completed, there might be more
-                        $hasMoreSegments = $true
-                    }
-                    catch {
-                        $hasMoreSegments = $false
-                    }
+                # Check if there are more segments to render based on render_batch.py output
+                if ($script:RenderStatus -eq "MAS_SEGMENTOS") {
+                    Write-Host "  [+] Detectados mas segmentos. Siguiente en 2 segundos..." -ForegroundColor DarkCyan
+                    Start-Sleep -Seconds 2
+                    # Loop continues automatically
                 }
-
-                if (-not $hasMoreSegments) {
+                elseif ($script:RenderStatus -eq "TODO_COMPLETO") {
                     Write-Host "  [OK] Todos los segmentos completados para: $($item.BlendFile.Name)" -ForegroundColor Green
                     break  # Exit segment loop, move to next file
                 }
-
-                Write-Host "  [+] Siguiente segmento en 2 segundos..." -ForegroundColor DarkCyan
-                Start-Sleep -Seconds 2
+                else {
+                    # Default: assume all done if status not set
+                    Write-Host "  [OK] Render finalizado para: $($item.BlendFile.Name)" -ForegroundColor Green
+                    break
+                }
             }
 
             Write-Host "Archivo completado: $($item.BlendFile.Name)"

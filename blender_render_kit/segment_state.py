@@ -58,11 +58,11 @@ def find_next_segment(jobs, current_state):
     return None  # All segments complete
 
 
-def has_more_segments(working_dir, jobs):
+def has_more_segments_after(jobs, working_dir):
     """
-    Check if there are more segments to render.
+    Check if there are MORE segments after the one just completed.
 
-    Returns True if there's a next segment, False if all complete.
+    Returns True if there's another segment to render, False if all complete.
     """
     state = read_render_state(working_dir)
     next_idx = find_next_segment(jobs, state)
