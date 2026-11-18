@@ -15,7 +15,9 @@ try:
         sys.exit(1)
 
     blend_path = Path(sys.argv[1]).resolve()
-    inspection_path = blend_path.parent / f"{blend_path.stem}_inspection.json"
+    # inspection.json is in the kit directory, not the blend directory
+    kit_directory = Path(__file__).parent
+    inspection_path = kit_directory / f"{blend_path.stem}_inspection.json"
 
     if inspection_cache_valid(blend_path, inspection_path):
         print("CACHE_VALID")
