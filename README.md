@@ -1,57 +1,70 @@
-# Render de Blender
+# Render de Blender - Kit Pro
 
-**Kit flexible para renderizar múltiples archivos `.blend` con configuración independiente por archivo.**
+**Renderiza múltiples archivos `.blend` sin acumulación de ViewLayers. Per-segment Blender resets = renders limpios.**
 
 ---
 
-## Paso a paso
+## ⚡ Quick Start
 
-### 1. Prepara la carpeta del proyecto
-
-Coloca `.blend` y `blender_render_kit` en la misma carpeta:
-
-```text
-proyecto\
-├── escena.blend
+### PASO 1: Carpeta del Proyecto
+```
+mi_proyecto\
+├── archivo_1.blend
+├── archivo_2.blend
 └── blender_render_kit\
 ```
 
-Archivos con sufijo `_RENDERIZADO` se omiten automáticamente.
+### PASO 2: Inspector (Primera vez, UNA SOLA VEZ)
 
-### 2. Configura Blender
-
-Abre PowerShell en `proyecto`. El script espera Blender 5.2 en:
-```
-C:\Program Files\Blender Foundation\Blender 5.2\blender.exe
-```
-
-Si está en otra ubicación, edita `$blenderExecutable` en `prepare_render.ps1`.
-
-### 3. Genera configuración (primera vez)
+Abre PowerShell en `mi_proyecto` y ejecuta:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -GenerateConfigsOnly
 ```
 
-Crea:
-- `<archivo>_render_user.json` (editable)
-- `<archivo>_inspection.json` (caché del .blend)
+**Genera automáticamente:**
+- `archivo_1_render_user.json` (editable - configura aquí)
+- `archivo_1_inspection.json` (caché del .blend)
+- `.archivo_1_inspection_cache.json` (checksum)
 
-### 4. Edita la configuración JSON
+**Lo mismo para archivo_2.blend, archivo_3.blend, etc.** (El script detecta todos)
 
-Abre `<archivo>_render_user.json`:
+**TIEMPO:** 3-5 min por archivo
+
+---
+
+## 📝 Paso 3: Edita Configuración
+
+Abre cada `*_render_user.json`:
 
 ```json
 {
   "schema_version": 1,
   "view_layers": [
     {
-      "name": "Master",
+      "name": "bolas",
       "segments": [
         {
           "name": "segment_01",
-          "start": 1,
-          "end": 120,
+          "start": 1696,
+          "end": 1700,
+          "renderizar": true
+        },
+        {
+          "name": "segment_02",
+          "start": 1701,
+          "end": 1750,
+          "renderizar": true
+        }
+      ]
+    },
+    {
+      "name": "tapaDEscargaTrommel",
+      "segments": [
+        {
+          "name": "segment_01",
+          "start": 1696,
+          "end": 1700,
           "renderizar": true
         }
       ]
@@ -60,97 +73,125 @@ Abre `<archivo>_render_user.json`:
 }
 ```
 
-**Parámetros:**
-- `name`: Nombre exacto del View Layer en Blender
-- `start`, `end`: Rango de frames (incluidos)
-- `renderizar`: `true`/`false` para incluir/excluir
+**Parámetros clave:**
+- `name`: ViewLayer exacto en Blender
+- `start`, `end`: Frame range (incluidos)
+- `renderizar`: `true` = incluir, `false` = saltar
 
-**Comportamiento:**
-- Segmento con `false` → se salta
-- View Layer con TODOS `false` → se salta
-- View Layer con ALGUNOS `false` → solo renderiza los `true`
+---
 
-### 5. Ejecuta el render
+## 🚀 Paso 4: Render SIN Inspector (Cached)
 
-**Primera ejecución (genera inspección + caché):**
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor
-```
+**La línea de código (copy-paste):**
 
-**Siguientes ejecuciones (caché automático, sin inspección):**
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor -SkipDryRun
 ```
 
-Escribe `S` cuando pregunte "¿Ejecutar render ahora?"
+**Presiona `S` cuando pregunte "¿Ejecutar render ahora?"**
 
-Verás:
-- Primera vez: `Inspeccionando archivo...` (3-5 min)
-- Siguientes veces: `Cache valido... (inspeccion saltada)` ⚡
+**Qué ocurre:**
+1. ✅ Detecta archivos `.blend`
+2. ✅ Verifica caché (Si `.blend` no cambió → inspección saltada ⚡)
+3. ✅ Renderiza CADA SEGMENTO con Blender nuevo (sin acumulación)
+   - Segmento 1 → Blender limpio → renderiza → cierra
+   - Segmento 2 → Blender limpio → renderiza → cierra
+   - Segmento 3 → Blender limpio → renderiza → cierra
+4. ✅ Guarda renders en: `renders\<archivo>\<viewlayer>\<segment>\`
 
-Renders se guardan en: `renders\<archivo>\<view_layer>\<segment>\`
-
-**Para pausar:** presiona **Ctrl+C**. Se guarda automáticamente.
-
-### 6. Marca como completado
-
-Cuando el render termine, renombra:
-```
-escena.blend → escena_RENDERIZADO.blend
-```
+**TIEMPO:** ⚡ Segundos (caché) + tiempo del render
 
 ---
 
-## Pausa y Reanudación
+## 🔄 Flujo Completo (Ejemplo Real)
 
-Presionar **Ctrl+C** guarda el estado exacto (ViewLayer, Segment, Frame) en `render_state.json`.
-
-Ejecutar nuevamente resume desde donde se pausó. Si cambias el JSON entre pausa y resume, el script pide confirmación.
-
-Para descartar una pausa:
 ```powershell
-Remove-Item "render_state.json", "render_jobs_backup.json"
+# DÍA 1: Inspector (una sola vez)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -GenerateConfigsOnly
+# Espera 15 min... archivos JSON creados
+
+# Edita: archivo_1_render_user.json (configura segments)
+# Edita: archivo_2_render_user.json (configura segments)
+
+# DÍA 2+: Render sin inspector (siempre esto)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\blender_render_kit\prepare_render.ps1" -SkipEditor -SkipDryRun
+# Presiona S
+# LISTO - renders limpios, sin ViewLayers duplicados
 ```
 
 ---
 
-## Opciones de ejecución
+## 🎯 Características Principales
 
-| Caso | Comando | Tiempo |
-|------|---------|--------|
-| Config inicial | `-GenerateConfigsOnly` | 3-5 min |
-| Render (primera vez) | `-SkipEditor` | 10-15 min |
-| Render (siguientes: caché) | `-SkipEditor -SkipDryRun` | ⚡ Segundos |
-
-**Caché automático:**
-- Primera vez: Genera `_inspection.json` + checksum SHA256
-- Siguientes veces: Compara checksum
-- Si `.blend` no cambió → inspección saltada
-- Si `.blend` cambió → regenera automáticamente
+✅ **Per-Segment Blender Resets** → Cada segmento renderiza con Blender 100% limpio  
+✅ **Sin ViewLayers Duplicados** → EXR contiene solo el layer esperado  
+✅ **Cache Automático** → Segunda ejecución es rápida (SHA256 checksum)  
+✅ **Multi-Archivo** → Renderiza todos los `.blend` en la carpeta  
+✅ **Control Granular** → Renderiza/salta segmentos por JSON  
+✅ **Pausa/Resume** → Ctrl+C guarda progreso, re-ejecuta continúa  
+✅ **Frame Step** → Respetado automáticamente  
+✅ **Formato Flexible** → EXR, PNG, etc.
 
 ---
 
-## Características
+## 🧹 Limpiar Caché (Si Necesitas Reinspeccionar)
 
-✅ Render aislado (1 ViewLayer por frame)  
-✅ Pausa/Resume inteligente  
-✅ Control granular de segmentos  
-✅ Multi-archivo en cola  
-✅ Caché automático de inspección  
-✅ Frame step respetado  
-✅ Formato configurable (EXR, PNG, etc.)
+```powershell
+# En mi_proyecto\
+Remove-Item ".archivo_1_inspection_cache.json"
+Remove-Item "archivo_1_inspection.json" -ErrorAction SilentlyContinue
+Remove-Item "blender_render_kit\archivo_1_inspection.json" -ErrorAction SilentlyContinue
+Remove-Item "render_state.json" -ErrorAction SilentlyContinue
+```
+
+Luego ejecuta inspector nuevamente (se regenera todo).
 
 ---
 
-## Troubleshooting
+## ⏸️ Pausa y Reanudación
 
-### Pausa descartada incorrectamente
+**Pausar durante render:** Presiona **Ctrl+C**  
+**Se guarda automáticamente:** `render_state.json` (ViewLayer, Segment, Frame actual)
+
+**Reanudar:** Ejecuta render nuevamente - continúa desde donde pausó
+
+**Descartar pausa:**
 ```powershell
 Remove-Item "render_state.json"
 ```
 
-### Frame locked "No puedo eliminar"
-Cierra el archivo en After Effects u otro programa.
+---
 
-### Restaurar inspección
-La inspección se genera automáticamente en cada ejecución. El caché se valida por checksum.
+## 🚨 Troubleshooting
+
+**"Frame locked" error**
+- Cierra el archivo en After Effects u otro programa
+
+**Inspección se ejecuta en cada render**
+- Limpiar caché (ver sección anterior)
+
+**Segmento renderiza incompleto**
+- Verifica `*_render_user.json` - rangos de frames correctos
+
+**Multiple renders del mismo segmento**
+- Limpiar `render_state.json`
+
+---
+
+## 📋 Tabla de Referencia
+
+| Situación | Comando | Tiempo |
+|-----------|---------|--------|
+| **Primera vez (inspector)** | `-GenerateConfigsOnly` | 3-5 min/archivo |
+| **Render sin caché** | `-SkipEditor` | 10+ min |
+| **Render con caché** | `-SkipEditor -SkipDryRun` | ⚡ Segundos + render |
+| **Limpiar todo** | Ver sección "Limpiar Caché" | - |
+
+---
+
+## 🎉 Resultado Esperado
+
+✅ Cada ViewLayer renderiza **limpiamente**  
+✅ **CERO ViewLayers duplicados** en EXR  
+✅ Renders organizados: `renders\archivo\layer\segment\frames`  
+✅ Listo para After Effects
