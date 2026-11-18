@@ -151,6 +151,7 @@ function Invoke-BlenderInspector {
 }
 
 
+function Invoke-Blender {
     param([string[]]$Arguments)
 
     $script:ResultReported = $false
