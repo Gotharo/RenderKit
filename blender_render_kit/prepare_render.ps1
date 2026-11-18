@@ -137,7 +137,12 @@ function Invoke-BlenderInspector {
     $logFile = Join-Path $env:TEMP "blender_inspector_$([guid]::NewGuid()).log"
 
     try {
-        $Arguments += @("--log-file", $logFile)
+        # Insert --log-file BEFORE --python (Blender args, not script args)
+        $pythonIndex = [Array]::IndexOf($Arguments, "--python")
+        if ($pythonIndex -ge 0) {
+            $Arguments = $Arguments[0..($pythonIndex-1)] + @("--log-file", $logFile) + $Arguments[$pythonIndex..($Arguments.Count-1)]
+        }
+
         & $script:BlenderExecutable @Arguments
 
         # Read and display log
