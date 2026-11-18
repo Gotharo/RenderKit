@@ -10,7 +10,8 @@ import bpy
 # Add kit directory to Python path so we can import local modules
 sys.path.insert(0, str(Path(__file__).parent))
 
-from inspection_cache import save_cache_metadata
+from cache_paths import get_inspection_path, get_cache_directory
+from inspection_cache import save_cache_metadata_centralized
 
 
 def get_script_arguments():
@@ -89,6 +90,7 @@ def main():
         raise ValueError(f"Unknown script arguments: {', '.join(unknown_arguments)}")
 
     blend_path = Path(bpy.data.filepath).resolve()
+    working_dir = blend_path.parent
     kit_directory = Path(__file__).resolve().parent
     if kit_directory.parent != blend_path.parent:
         raise RuntimeError(
@@ -96,7 +98,8 @@ def main():
             "and run the inspector from that copy."
         )
 
-    output_path = blend_path.parent / f"{blend_path.stem}_inspection.json"
+    # Use centralized cache directory
+    output_path = get_inspection_path(blend_path, working_dir)
     render_config_path = blend_path.parent / f"{blend_path.stem}_render_user.json"
     render_scene = get_render_scene(kit_directory)
 
@@ -149,8 +152,8 @@ def main():
         )
         print(f"CONFIGURACION: plantilla creada: {render_config_path}")
 
-    # Save cache after inspection completes
-    save_cache_metadata(blend_path, output_path)
+    # Save cache after inspection completes (in centralized cache directory)
+    save_cache_metadata_centralized(blend_path, output_path, working_dir)
 
     if "--config-only" in arguments:
         print("RESULTADO: OK - configuracion preparada; inspeccion guardada en cache.")
