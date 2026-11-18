@@ -12,6 +12,7 @@ import bpy
 # Add kit directory to Python path for local imports
 sys.path.insert(0, str(Path(__file__).parent))
 from segment_state import get_jobs_to_render, has_more_segments_after
+from segment_progress import save_segment_completion
 
 
 OPTIONS = {"--dry-run", "--overwrite-existing"}
@@ -582,6 +583,16 @@ def main():
         return
 
     render_jobs(jobs)
+
+    # Save progress for this segment so next execution knows to continue
+    if jobs:
+        completed_job = jobs[0]
+        save_segment_completion(
+            working_dir,
+            completed_job["view_layer"].name,
+            completed_job["segment_name"],
+            completed_job["end"],
+        )
 
     # Check if there are more segments to render after this one
     more_segments = has_more_segments_after(all_jobs, working_dir)
