@@ -221,6 +221,7 @@ def build_jobs(master, user_config):
         segment_names = set()
         segment_ranges = []
         layer_token = safe_path_token(layer_name)
+        jobs_count_before_layer = len(jobs)
         for segment in segments:
             segment_name = segment.get("name")
             if not isinstance(segment_name, str) or not segment_name:
@@ -310,6 +311,10 @@ def build_jobs(master, user_config):
                     "file_format": scene.render.image_settings.file_format,
                 }
             )
+
+        if len(jobs) == jobs_count_before_layer:
+            print(f"  ⏭️  Saltando: {layer_name} (sin segmentos activos)", flush=True)
+
 
     if not jobs:
         raise ValueError("The user JSON contains no render segments.")
