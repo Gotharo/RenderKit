@@ -65,6 +65,7 @@ def build_render_config(scene):
                         "name": "segment_01",
                         "start": scene.frame_start,
                         "end": scene.frame_end,
+                        "renderizar": True,
                     }
                 ],
             }

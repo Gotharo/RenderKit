@@ -247,6 +247,17 @@ def build_jobs(master, user_config):
                     f"Invalid frame range for {layer_name!r}/{segment_name!r}: "
                     f"{start!r}..{end!r}"
                 )
+
+            should_render = segment.get("renderizar", True)
+            if not isinstance(should_render, bool):
+                raise ValueError(
+                    f"'renderizar' must be boolean (true/false) for "
+                    f"{layer_name!r}/{segment_name!r}"
+                )
+
+            if not should_render:
+                continue
+
             for previous_name, previous_start, previous_end in segment_ranges:
                 if start <= previous_end and previous_start <= end:
                     print(
