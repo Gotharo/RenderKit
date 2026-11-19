@@ -481,45 +481,11 @@ def validate_output_paths(jobs, overwrite_existing=True):
 
 def print_plan(jobs):
     total_frames = 0
-    printed_layers = set()
     for job in jobs:
         frame_count = job_frame_count(job)
         total_frames += frame_count
-        layer_key = (job["scene"].name, job["view_layer"].name)
-        if layer_key not in printed_layers:
-            printed_layers.add(layer_key)
-            root_name = job["view_layer"].layer_collection.collection.name
-            included = [
-                path
-                for path, excluded in job["collection_states"].items()
-                if not excluded and path != root_name
-            ]
-            excluded = [
-                path
-                for path, is_excluded in job["collection_states"].items()
-                if is_excluded and path != root_name
-            ]
-            print(f"View Layer: {job['view_layer'].name}", flush=True)
-            print(
-                "  Colecciones incluidas: "
-                + (", ".join(included) if included else "ninguna"),
-                flush=True,
-            )
-            print(
-                "  Colecciones excluidas: "
-                + (", ".join(excluded) if excluded else "ninguna"),
-                flush=True,
-            )
-        print(
-            f"  Segmento: {job['segment_name']} | "
-            f"fotogramas {job['start']}-{job['end']} ({frame_count}) | "
-            f"{job['file_format']} -> {job['output_base']}",
-            flush=True,
-        )
-    print(
-        f"Plan: {len(jobs)} segmentos, {total_frames} fotogramas.",
-        flush=True,
-    )
+    # Clean output: only print total plan, not collection details
+    # (Those verbose collection lines are suppressed for readability)
     return len(jobs), total_frames
 
 
