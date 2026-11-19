@@ -1,28 +1,13 @@
-# Blender files
-*.blend
-*.blend1
-
-# Render outputs
-renders/
-*.exr
-*.png
-*.jpg
-*.tiff
-
-# Render state files
-render_state.json
-render_jobs_backup.json
-
-# Inspection reports (optional - keep if you want to track changes)
-*_inspection.json
-
-# Python installations and cache
-blender_render_kit/Python/
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
-
-# System files
+.Python
+build/
+dist/
+*.egg
 .DS_Store
-Thumbs.db
+render_state_*.json
+render_jobs_backup.json
+.inspection_cache/
+blender_render.log
