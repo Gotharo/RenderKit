@@ -15,9 +15,9 @@ function Show-RenderPlan {
     }
 
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║          PLAN DE RENDER - VERIFICACIÓN         ║" -ForegroundColor Cyan
-    Write-Host "╚════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "====================================================" -ForegroundColor Cyan
+    Write-Host "          PLAN DE RENDER - VERIFICACION" -ForegroundColor Cyan
+    Write-Host "====================================================" -ForegroundColor Cyan
     Write-Host ""
 
     for ($i = 0; $i -lt $RenderItems.Count; $i++) {
@@ -46,7 +46,7 @@ function Show-RenderPlan {
             foreach ($seg in $vl.segments) {
                 if ($seg.renderizar -ne $false) {
                     $frameCount = $seg.end - $seg.start + 1
-                    Write-Host "    ├─ $($seg.name): frames $($seg.start)-$($seg.end) ($frameCount frames)"
+                    Write-Host "    |- $($seg.name): frames $($seg.start)-$($seg.end) ($frameCount frames)"
 
                     $vlData.segmentos += @{
                         name = $seg.name
@@ -73,10 +73,10 @@ function Show-RenderPlan {
     $planData | ConvertTo-Json -Depth 10 | Set-Content $OutputPath -Encoding UTF8
 
     Write-Host "RESUMEN:" -ForegroundColor Cyan
-    Write-Host " • Total archivos: $($planData.resumen.total_archivos)"
-    Write-Host " • Total segmentos: $($planData.resumen.total_segmentos)"
-    Write-Host " • Total frames: $($planData.resumen.total_frames)"
-    Write-Host " • Archivo de plan guardado: render_plan.json"
+    Write-Host " - Total archivos: $($planData.resumen.total_archivos)"
+    Write-Host " - Total segmentos: $($planData.resumen.total_segmentos)"
+    Write-Host " - Total frames: $($planData.resumen.total_frames)"
+    Write-Host " - Archivo de plan guardado: render_plan.json"
     Write-Host ""
 }
 
