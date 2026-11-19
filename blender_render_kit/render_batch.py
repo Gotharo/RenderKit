@@ -13,6 +13,7 @@ import bpy
 sys.path.insert(0, str(Path(__file__).parent))
 from segment_state import get_jobs_to_render, has_more_segments_after
 from segment_progress import save_segment_completion
+from output_filter import format_with_blend_name
 
 
 OPTIONS = {"--dry-run", "--overwrite-existing"}
@@ -575,6 +576,10 @@ def main():
     validate_output_paths(jobs, overwrite_existing=True)
     segment_count, total_frames = print_plan(jobs)
 
+    # Print plan with blend filename
+    plan_msg = f"Plan: {segment_count} segmentos, {total_frames} fotogramas."
+    print(format_with_blend_name(plan_msg, blend_name), flush=True)
+
     if "--dry-run" in arguments:
         print(
             f"RESULTADO: OK - dry-run completado: {segment_count} segmentos, "
@@ -607,9 +612,11 @@ def main():
 
     # Signal to PowerShell if there are more segments
     if more_segments:
-        print("RENDER_STATUS: MAS_SEGMENTOS", flush=True)
+        status_msg = "RENDER_STATUS: MAS_SEGMENTOS"
+        print(format_with_blend_name(status_msg, blend_name), flush=True)
     else:
-        print("RENDER_STATUS: TODO_COMPLETO", flush=True)
+        status_msg = "RENDER_STATUS: TODO_COMPLETO"
+        print(format_with_blend_name(status_msg, blend_name), flush=True)
 
 
 if __name__ == "__main__":
