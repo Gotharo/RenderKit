@@ -4,23 +4,39 @@ import json
 from pathlib import Path
 
 
-def get_render_state_path(working_dir):
-    """Get path to render_state.json."""
-    return Path(working_dir) / "render_state.json"
-
-
-def read_render_state(working_dir):
+def get_render_state_path(working_dir, blend_name):
     """
-    Read render_state.json to determine which segment was last completed.
+    Get path to render_state.json for a specific blend file.
+
+    Per-file render state prevents interference between multiple files.
+
+    Args:
+        working_dir: Working directory
+        blend_name: Blend file stem (without .blend extension)
+
+    Returns:
+        Path to render_state JSON file for this blend
+    """
+    return Path(working_dir) / f"render_state_{blend_name}.json"
+
+
+def read_render_state(working_dir, blend_name):
+    """
+    Read render_state.json for specific blend to determine which segment was last completed.
+
+    Args:
+        working_dir: Working directory
+        blend_name: Blend file stem (without .blend extension)
 
     Returns dict with keys:
+    - blend_file: Name of .blend file
     - view_layer: Name of last rendered view layer
     - segment: Name of last rendered segment
     - frame: Last rendered frame number
 
-    Returns None if file doesn't exist (first run).
+    Returns None if file doesn't exist (first run for this blend).
     """
-    state_path = get_render_state_path(working_dir)
+    state_path = get_render_state_path(working_dir, blend_name)
     if not state_path.exists():
         return None
 
@@ -58,24 +74,34 @@ def find_next_segment(jobs, current_state):
     return None  # All segments complete
 
 
-def has_more_segments_after(jobs, working_dir):
+def has_more_segments_after(jobs, working_dir, blend_name):
     """
     Check if there are MORE segments after the one just completed.
 
     Returns True if there's another segment to render, False if all complete.
+
+    Args:
+        jobs: All render jobs
+        working_dir: Working directory
+        blend_name: Blend file stem
     """
-    state = read_render_state(working_dir)
+    state = read_render_state(working_dir, blend_name)
     next_idx = find_next_segment(jobs, state)
     return next_idx is not None
 
 
-def get_jobs_to_render(jobs, working_dir):
+def get_jobs_to_render(jobs, working_dir, blend_name):
     """
-    Filter jobs to render only the next segment.
+    Filter jobs to render only the next segment for this blend.
 
     Returns list with zero or one job (the next segment).
+
+    Args:
+        jobs: All render jobs
+        working_dir: Working directory
+        blend_name: Blend file stem
     """
-    state = read_render_state(working_dir)
+    state = read_render_state(working_dir, blend_name)
     next_idx = find_next_segment(jobs, state)
 
     if next_idx is None:

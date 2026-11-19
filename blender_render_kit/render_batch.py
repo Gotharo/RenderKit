@@ -560,9 +560,10 @@ def main():
     user_config = json.loads(config_path.read_text(encoding="utf-8"))
     all_jobs = build_jobs(master, user_config)
 
-    # Filter to render only the next segment (per-segment execution)
+    # Filter to render only the next segment (per-segment execution, per-file state)
     working_dir = config_path.parent
-    jobs = get_jobs_to_render(all_jobs, working_dir)
+    blend_name = config_path.stem.replace("_render_user", "")
+    jobs = get_jobs_to_render(all_jobs, working_dir, blend_name)
 
     if not jobs:
         print(
@@ -584,18 +585,19 @@ def main():
 
     render_jobs(jobs)
 
-    # Save progress for this segment so next execution knows to continue
+    # Save progress for this segment so next execution knows to continue (per-file state)
     if jobs:
         completed_job = jobs[0]
         save_segment_completion(
             working_dir,
+            blend_name,
             completed_job["view_layer"].name,
             completed_job["segment_name"],
             completed_job["end"],
         )
 
     # Check if there are more segments to render after this one
-    more_segments = has_more_segments_after(all_jobs, working_dir)
+    more_segments = has_more_segments_after(all_jobs, working_dir, blend_name)
 
     print(
         f"RESULTADO: OK - render completado: {segment_count} segmentos, "
