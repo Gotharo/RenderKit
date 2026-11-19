@@ -79,6 +79,3 @@ function Show-RenderPlan {
     Write-Host " - Archivo de plan guardado: render_plan.json"
     Write-Host ""
 }
-
-# Export function so it can be called from prepare_render.ps1
-Export-ModuleMember -Function Show-RenderPlan
