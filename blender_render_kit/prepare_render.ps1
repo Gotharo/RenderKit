@@ -25,6 +25,7 @@ $workingDirectory = (Get-Location).Path
 $kitDirectory = Join-Path $workingDirectory "blender_render_kit"
 $inspectorPath = Join-Path $kitDirectory "inspect_blend.py"
 $renderBatchPath = Join-Path $kitDirectory "render_batch.py"
+$renderPlanPath = Join-Path $workingDirectory "render_plan.json"
 
 function Format-RenderDuration {
     param([double]$Seconds)
@@ -254,6 +255,10 @@ try {
         throw "No se encontro render_batch.py en: $renderBatchPath"
     }
 
+    # Import render plan module for verification
+    $renderPlanModule = Join-Path $kitDirectory "render_plan.ps1"
+    . $renderPlanModule
+
     $allBlendFiles = @(
         Get-ChildItem -LiteralPath $workingDirectory -Filter "*.blend" -File |
             Sort-Object Name
@@ -475,6 +480,8 @@ try {
         }
     }
 
+    # Show render plan verification before asking confirmation
+    Show-RenderPlan -RenderItems $renderItems -OutputPath $renderPlanPath
 
     do {
         $renderAnswer = (Read-Host $renderPrompt).Trim().ToUpperInvariant()
